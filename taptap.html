@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TapSpeed Elite | Mobile Pro Ad-Ready</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --neon-pink: #ff00e5;
+            --neon-purple: #7000ff;
+            --bg-dark: #05050a;
+        }
+
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #11112b 0%, var(--bg-dark) 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            touch-action: none;
+        }
+
+        /* AdMob Banner Placeholder */
+        #ad-banner {
+            width: 100%;
+            height: 50px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #555;
+            border-bottom: 1px solid #222;
+        }
+
+        #game-container {
+            flex-grow: 1;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .status-bar {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #score {
+            font-size: 4.5rem;
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(to bottom, #fff, var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+            line-height: 1;
+        }
+
+        .timer-box { margin-top: 10px; }
+        .progress-container {
+            width: 100%; height: 8px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        #progress-bar {
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+            transition: width 0.1s linear;
+        }
+
+        .tap-zone {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #tap-btn {
+            width: 230px;
+            height: 230px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #1a1a1a, #000);
+            border: 6px solid var(--neon-blue);
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.05s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #tap-btn:active { transform: scale(0.9); border-color: var(--neon-pink); }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 10, 0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        .menu-btn {
+            width: 100%; max-width: 280px;
+            padding: 18px; margin: 10px 0;
+            border: 2px solid var(--neon-blue);
+            background: transparent; color: white;
+            border-radius: 15px; font-weight: bold;
+        }
+
+        .floating-pop {
+            position: absolute; color: white; font-weight: 900;
+            pointer-events: none; animation: popUp 0.5s ease-out forwards;
+            font-size: 1.5rem; text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        @keyframes popUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-120px) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ad-banner">
+        AD BANNER SLOT (ca-app-pub-6633282533814225/7880869023)
+    </div>
+
+    <div id="game-container">
+        <div class="status-bar">
+            <div id="score">0</div>
+            <div class="timer-box">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.8;">
+                    <span>TIME</span>
+                    <span id="timer-text">00:00</span>
+                </div>
+                <div class="progress-container">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tap-zone">
+            <button id="tap-btn">
+                <span style="font-size: 1.8rem; font-weight: bold;">TAP!</span>
+            </button>
+        </div>
+
+        <div id="best-score" style="text-align: center; font-size: 0.9rem; color: var(--neon-blue); opacity: 0.6; padding-bottom: 10px;">
+            PERSONAL BEST: 0
+        </div>
+    </div>
+
+    <div id="start-screen" class="overlay">
+        <h1 style="color: var(--neon-pink); margin-bottom: 30px;">TAP SPEED</h1>
+        <button class="menu-btn" onclick="initGame(30)">⚡ 30 SECONDS</button>
+        <button class="menu-btn" onclick="initGame(60)">🚀 1 MINUTE</button>
+    </div>
+
+    <div id="result-screen" class="overlay hidden">
+        <h2>GAME OVER</h2>
+        <h1 id="final-score" style="font-size: 5rem; margin: 20px 0;">0</h1>
+        <button class="menu-btn" onclick="location.reload()">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        const config = {
+            score: 0, timeLeft: 0, totalTime: 0, active: false,
+            best: localStorage.getItem('tapSpeedBest') || 0
+        };
+
+        const scoreDisplay = document.getElementById('score');
+        const timerText = document.getElementById('timer-text');
+        const progressBar = document.getElementById('progress-bar');
+        
+        document.getElementById('best-score').innerText = `PERSONAL BEST: ${config.best}`;
+
+        function initGame(seconds) {
+            config.score = 0;
+            config.timeLeft = seconds;
+            config.totalTime = seconds;
+            config.active = true;
+            document.getElementById('start-screen').classList.add('hidden');
+            
+            // App එකක් විදිහට build කළොත් මෙතැනදී Interstitial Ad එකක් පෙන්වන්න පුළුවන්
+            console.log("AdMob: Loading Interstitial for Unit 7880869023");
+            
+            startCountdown();
+        }
+
+        function startCountdown() {
+            const tick = setInterval(() => {
+                config.timeLeft--;
+                const m = Math.floor(config.timeLeft / 60);
+                const s = config.timeLeft % 60;
+                timerText.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+                progressBar.style.width = `${(config.timeLeft / config.totalTime) * 100}%`;
+                
+                if (config.timeLeft <= 0) {
+                    clearInterval(tick);
+                    finishGame();
+                }
+            }, 1000);
+        }
+
+        document.getElementById('tap-btn').addEventListener('pointerdown', (e) => {
+            if (!config.active) return;
+            config.score++;
+            scoreDisplay.innerText = config.score;
+            if (navigator.vibrate) navigator.vibrate(15);
+            
+            if (config.score % 50 === 0) {
+                confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+            }
+        });
+
+        function finishGame() {
+            config.active = false;
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = config.score;
+            
+            if (config.score > config.best) {
+                localStorage.setItem('tapSpeedBest', config.score);
+                confetti({ particleCount: 150, spread: 70 });
+            }
+        }
+    </script>
+</body>
+</html>
